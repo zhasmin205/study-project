@@ -1,0 +1,12 @@
+{
+  "name": "linguai-pro",
+  "version": "1.0.0",
+  "description": "Intelligent Language Learning Platform with AI Tutor",
+  "main": "index.html",
+  "scripts": {
+    "build": "echo 'Static site - no build needed'"
+  },
+  "keywords": ["language-learning", "ai", "tutor"],
+  "author": "",
+  "license": "MIT"
+}

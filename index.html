@@ -55,6 +55,13 @@
         #toast { position: fixed; bottom: 20px; right: 20px; background: var(--bg-panel); border-left: 5px solid var(--primary); padding: 15px 25px; border-radius: 8px; transform: translateX(250%); transition: 0.5s; z-index: 1000; }
         
         .level-badge { font-size: 10px; text-transform: uppercase; background: var(--primary); padding: 2px 8px; border-radius: 4px; margin-bottom: 5px; display: inline-block; }
+        
+        .chat-message { margin-bottom: 15px; display: flex; gap: 10px; animation: slideIn 0.3s ease-out; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .chat-message.user { justify-content: flex-end; }
+        .chat-bubble { max-width: 70%; padding: 12px 15px; border-radius: 12px; line-height: 1.5; word-wrap: break-word; }
+        .chat-message.user .chat-bubble { background: var(--primary); color: white; border-radius: 12px 4px 12px 12px; }
+        .chat-message.ai .chat-bubble { background: var(--bg-card); color: var(--text-main); border-radius: 4px 12px 12px 12px; border-left: 3px solid var(--primary); }
     </style>
 </head>
 <body>
@@ -86,8 +93,20 @@
 
         <div id="chat" class="page">
             <h1>Smart Tutor AI</h1>
-            <div class="card" style="height: 400px; display: flex; align-items: center; justify-content: center; color: var(--text-muted);">
-                [Система ИИ будет подключена вами отдельно]
+            <div class="card" style="display: flex; flex-direction: column; height: 500px; padding: 20px;">
+                <div id="chat-messages" style="flex: 1; overflow-y: auto; margin-bottom: 20px; border: 1px solid var(--border); border-radius: 8px; padding: 15px; background: var(--bg-dark);">
+                    <div style="text-align: center; color: var(--text-muted); padding: 20px;">
+                        <p>👋 Welcome to Smart Tutor AI!</p>
+                        <p style="font-size: 12px;">Ask me anything about English or Chinese learning</p>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="chat-input" class="input-field" placeholder="Ask your tutor a question..." style="margin: 0; flex: 1;">
+                    <button class="btn" id="chat-send" onclick="sendMessage()" style="padding: 12px 25px;">Send</button>
+                </div>
+                <div id="chat-loading" style="margin-top: 10px; text-align: center; color: var(--primary); display: none; font-size: 12px;">
+                    ✨ Tutor is thinking...
+                </div>
             </div>
         </div>
 
@@ -428,6 +447,76 @@
         }
 
         window.onload = updateUI;
+
+        /* --- CHAT FUNCTIONS --- */
+        let chatHistory = [];
+
+        async function sendMessage() {
+            const input = document.getElementById('chat-input');
+            const message = input.value.trim();
+
+            if (!message) return;
+
+            // Add user message to UI
+            addChatMessage(message, 'user');
+            input.value = '';
+
+            // Show loading state
+            const loading = document.getElementById('chat-loading');
+            loading.style.display = 'block';
+
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to get response');
+                }
+
+                const data = await response.json();
+                addChatMessage(data.reply, 'ai');
+            } catch (error) {
+                console.error('Error:', error);
+                addChatMessage('Sorry, I encountered an error. Please check that your API key is configured correctly.', 'ai');
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+
+        function addChatMessage(text, sender) {
+            const messagesDiv = document.getElementById('chat-messages');
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `chat-message ${sender}`;
+            msgDiv.innerHTML = `<div class="chat-bubble">${escapeHtml(text)}</div>`;
+            messagesDiv.appendChild(msgDiv);
+
+            // Auto-scroll to bottom
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+
+        // Allow Enter key to send message
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('chat-input').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+        });
     </script>
 </body>
 </html>
