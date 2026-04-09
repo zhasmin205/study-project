@@ -26,7 +26,7 @@ module.exports = async function handler(req, res) {
 
   try {
     const response = await fetch(
-      'https://router.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.1',
+      'https://api-inference.huggingface.co/models/meta-llama/Llama-2-7b-chat-hf',
       {
         method: 'POST',
         headers: {
@@ -46,7 +46,18 @@ Assistant:`,
       }
     );
 
-    const data = await response.json();
+    let data;
+    const contentType = response.headers.get('content-type');
+    
+    // Handle both JSON and text responses
+    if (contentType && contentType.includes('application/json')) {
+      data = await response.json();
+    } else {
+      const text = await response.text();
+      return res.status(response.status).json({
+        error: text || 'API returned invalid response'
+      });
+    }
 
     if (!response.ok) {
       return res.status(response.status).json({
@@ -54,7 +65,7 @@ Assistant:`,
       });
     }
 
-    // Handle different response formats from Hugging Face
+    // Handle Hugging Face response format
     let reply = '';
     
     if (Array.isArray(data)) {
@@ -65,13 +76,16 @@ Assistant:`,
       }
     } else if (data.generated_text) {
       reply = data.generated_text;
+      if (reply.includes('Assistant:')) {
+        reply = reply.split('Assistant:')[1].trim();
+      }
     } else {
       reply = 'No response generated';
     }
 
     return res.status(200).json({ reply });
   } catch (error) {
-    console.error('Error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    console.error('Error:', error.message);
+    return res.status(500).json({ error: 'Internal server error: ' + error.message });
   }
 }
