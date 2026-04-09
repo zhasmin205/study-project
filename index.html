@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinguAI Pro - Intelligent Language Learning</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-glow: rgba(99, 102, 241, 0.4);
+            --secondary: #ec4899;
+            --bg-dark: #0f172a;
+            --bg-panel: #1e293b;
+            --bg-card: #2d3748;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --border: #334155;
+            --radius: 12px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg-dark); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
+
+        /* Sidebar */
+        .sidebar { width: 280px; background-color: var(--bg-panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 25px 0; z-index: 100; }
+        .logo { font-size: 24px; font-weight: 800; color: var(--primary); padding: 0 25px 25px; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+        .nav-item { padding: 16px 25px; cursor: pointer; transition: 0.3s; display: flex; align-items: center; gap: 15px; color: var(--text-muted); font-weight: 600; }
+        .nav-item:hover { color: var(--text-main); background: rgba(255,255,255,0.05); }
+        .nav-item.active { color: var(--primary); background: rgba(99, 102, 241, 0.1); border-right: 4px solid var(--primary); }
+
+        /* Main */
+        .main-content { flex: 1; display: flex; flex-direction: column; height: 100vh; overflow-y: auto; padding: 40px; }
+        .page { display: none; animation: fadeIn 0.4s ease-out; }
+        .page.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .card { background: var(--bg-panel); border-radius: var(--radius); padding: 25px; border: 1px solid var(--border); margin-bottom: 25px; }
+        .btn { background: var(--primary); color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: 700; transition: 0.2s; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px var(--primary-glow); }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-main); }
+
+        .input-field { background: var(--bg-dark); border: 1px solid var(--border); color: white; padding: 12px; border-radius: 8px; width: 100%; margin: 10px 0; outline: none; }
+        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; }
+        .opt-card { background: var(--bg-dark); border: 2px solid var(--border); padding: 15px; border-radius: 8px; cursor: pointer; text-align: center; }
+        .opt-card:hover { border-color: var(--primary); }
+        .opt-card.correct { border-color: var(--success); background: rgba(16, 185, 129, 0.1); }
+        .opt-card.wrong { border-color: var(--danger); background: rgba(239, 68, 68, 0.1); }
+
+        .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-val { font-size: 32px; font-weight: 800; color: var(--primary); }
+        
+        #toast { position: fixed; bottom: 20px; right: 20px; background: var(--bg-panel); border-left: 5px solid var(--primary); padding: 15px 25px; border-radius: 8px; transform: translateX(250%); transition: 0.5s; z-index: 1000; }
+        
+        .level-badge { font-size: 10px; text-transform: uppercase; background: var(--primary); padding: 2px 8px; border-radius: 4px; margin-bottom: 5px; display: inline-block; }
+    </style>
+</head>
+<body>
+
+    <nav class="sidebar">
+        <div class="logo">🧠 LinguAI Pro</div>
+        <div class="nav-item active" onclick="navTo('dashboard', this)">📊 Dashboard</div>
+        <div class="nav-item" onclick="navTo('chat', this)">💬 Smart Tutor AI</div>
+        <div class="nav-item" onclick="navTo('test', this)">📝 Assessment Lab</div>
+        <div class="nav-item" onclick="navTo('library', this)">📚 Library & Tasks</div>
+    </nav>
+
+    <main class="main-content">
+        <div id="dashboard" class="page active">
+            <h1>Welcome back!</h1>
+            <p style="color: var(--text-muted); margin-bottom: 25px;">Track your language learning progress.</p>
+            <div class="stat-grid">
+                <div class="card"><div class="stat-val" id="xp-display">0</div><p>Total XP</p></div>
+                <div class="card"><div class="stat-val" id="accuracy-display">0%</div><p>Global Accuracy</p></div>
+                <div class="card"><div class="stat-val" id="tests-display">0</div><p>Tests Passed</p></div>
+            </div>
+            <div class="card">
+                <h3>Error Analysis & Achievements</h3>
+                <div id="error-log" style="margin-top: 15px;">
+                    <p style="color: var(--text-muted)">No mistakes yet! Keep it up. [cite: 321]</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="chat" class="page">
+            <h1>Smart Tutor AI</h1>
+            <div class="card" style="height: 400px; display: flex; align-items: center; justify-content: center; color: var(--text-muted);">
+                [Система ИИ будет подключена вами отдельно]
+            </div>
+        </div>
+
+        <div id="test" class="page">
+            <div id="test-setup">
+                <h1>Assessment Lab</h1>
+                <div class="card" style="margin-top: 20px;">
+                    <h3>Select Language & Level</h3>
+                    <div style="display: flex; gap: 10px; margin-top: 15px;">
+                        <select id="test-lang" class="input-field">
+                            <option value="en">English (A1-C2)</option>
+                            <option value="cn">Chinese (HSK 1-5)</option>
+                        </select>
+                        <select id="test-level" class="input-field">
+                            <option value="A1">Level A1 / HSK 1</option>
+                            <option value="A2">Level A2 / HSK 2</option>
+                            <option value="B1">Level B1 / HSK 3</option>
+                            <option value="B2">Level B2 / HSK 4</option>
+                            <option value="C1">Level C1 / HSK 5</option>
+                            <option value="C2">Level C2 / HSK 6</option>
+                        </select>
+                    </div>
+                    <button class="btn" style="width: 100%; margin-top: 10px;" onclick="startTest()">Start 10-Question Test</button>
+                </div>
+            </div>
+            <div id="test-engine" style="display: none;">
+                <div class="card">
+                    <div id="test-progress" style="color: var(--primary); font-weight: bold; margin-bottom: 10px;">Question 1/10</div>
+                    <h2 id="test-question">Question text here?</h2>
+                    <div class="options-grid" id="test-options"></div>
+                </div>
+            </div>
+            <div id="test-results" style="display: none;"></div>
+        </div>
+
+        <div id="library" class="page">
+            <h1>Library & Interactive Tasks</h1>
+            <div class="card" style="margin-top: 20px;">
+                <div style="display: flex; gap: 10px;">
+                    <select id="lib-lang" class="input-field" onchange="renderLibrary()">
+                        <option value="en">English Tasks</option>
+                        <option value="cn">Chinese Tasks</option>
+                    </select>
+                    <select id="lib-level" class="input-field" onchange="renderLibrary()">
+                        <option value="A1">Beginner</option>
+                        <option value="A2">Elementary</option>
+                    </select>
+                </div>
+            </div>
+            <div id="library-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;"></div>
+        </div>
+    </main>
+
+    <div id="toast">XP Updated!</div>
+
+    <script>
+        /* --- DATA BANK --- */
+        const testBank = {
+            en: {
+                A1: [
+                    {q: "Hello, what ______ your name?", o: ["is", "are", "am"], c: 0},
+                    {q: "I ______ from Spain.", o: ["is", "am", "be"], c: 1},
+                    {q: "Where ______ she live?", o: ["do", "does", "doing"], c: 1},
+                    {q: "I have two ______.", o: ["sister", "sisters", "sisteres"], c: 1},
+                    {q: "Look at ______ car over there!", o: ["this", "these", "that"], c: 2},
+                    {q: "______ you like pizza?", o: ["Are", "Do", "Does"], c: 1},
+                    {q: "There ______ a pen on the table.", o: ["is", "are", "am"], c: 0},
+                    {q: "I ______ a student.", o: ["'m not", "don't", "isn't"], c: 0},
+                    {q: "He ______ breakfast at 8 AM.", o: ["eat", "eats", "eating"], c: 1},
+                    {q: "My brother’s son is my ______.", o: ["cousin", "nephew", "uncle"], c: 1}
+                ],
+                A2: [
+                    {q: "Yesterday we ______ to the cinema.", o: ["go", "went", "gone"], c: 1},
+                    {q: "She is ______ than her sister.", o: ["more tall", "taller", "the tallest"], c: 1},
+                    {q: "Have you ever ______ a horse?", o: ["ride", "rode", "ridden"], c: 2},
+                    {q: "I ______ finish my homework tonight.", o: ["must", "must to", "should to"], c: 0},
+                    {q: "The weather is ______ today than yesterday.", o: ["gooder", "better", "best"], c: 1},
+                    {q: "While I ______ , the phone rang.", o: ["cooked", "was cooking", "cook"], c: 1},
+                    {q: "He didn’t ______ anything.", o: ["say", "said", "says"], c: 0},
+                    {q: "We ______ to London last year.", o: ["have been", "were", "went"], c: 2},
+                    {q: "This is the ______ building in the city.", o: ["most old", "oldest", "older"], c: 1},
+                    {q: "You ______ smoke here.", o: ["mustn't", "don't have to", "needn't"], c: 0}
+                ],
+                B1: [
+                    {q: "If it rains, we ______ at home.", o: ["stay", "will stay", "would stay"], c: 1},
+                    {q: "The car ______ repaired yesterday.", o: ["was", "did", "is"], c: 0},
+                    {q: "I ______ learning English for three years.", o: ["am", "have been", "was"], c: 1},
+                    {q: "If I ______ you, I would go to the doctor.", o: ["am", "was", "were"], c: 2},
+                    {q: "I ______ used to living in a big city.", o: ["am", "get", "do"], c: 0},
+                    {q: "He asked me where ______ lived.", o: ["did I", "I", "I did"], c: 1},
+                    {q: "You ______ better see a dentist.", o: ["should", "would", "had"], c: 2},
+                    {q: "That’s the man ______ house was sold.", o: ["who", "which", "whose"], c: 2},
+                    {q: "I don’t mind ______ the dishes.", o: ["wash", "washing", "to wash"], c: 1},
+                    {q: "By the time she arrived, the train ______.", o: ["left", "has left", "had left"], c: 2}
+                ],
+                B2: [
+                    {q: "I wish I ______ that yesterday.", o: ["didn't say", "hadn't said", "wouldn't say"], c: 1},
+                    {q: "She ______ have forgotten about the meeting.", o: ["must", "should", "ought"], c: 0},
+                    {q: "Hardly ______ entered the room when the light went out.", o: ["I had", "had I", "I"], c: 1},
+                    {q: "I’d rather you ______ me the truth.", o: ["tell", "told", "will tell"], c: 1},
+                    {q: "The project ______ finished by next Monday.", o: ["will be", "will have been", "is"], c: 1},
+                    {q: "I regret ______ him my secret.", o: ["to tell", "telling", "tell"], c: 1},
+                    {q: "It’s time we ______ .", o: ["leave", "left", "will leave"], c: 1},
+                    {q: "No sooner had he arrived ______ it started raining.", o: ["than", "then", "when"], c: 0},
+                    {q: "I'm not used to ______ up so early.", o: ["wake", "waking", "woke"], c: 1},
+                    {q: "He ______ to be the best in his field.", o: ["considers", "is considered", "is considering"], c: 1}
+                ],
+                C1: [
+                    {q: "Were it ______ for his help, I would have failed.", o: ["not", "but", "never"], c: 0},
+                    {q: "Little ______ he know what was about to happen.", o: ["did", "does", "had"], c: 0},
+                    {q: "I'd sooner you ______ stay here tonight.", o: ["didn't", "don't", "wouldn't"], c: 0},
+                    {q: "The company is on the ______ of bankruptcy.", o: ["edge", "verge", "border"], c: 1},
+                    {q: "Such ______ the intensity of the storm that trees were uprooted.", o: ["was", "is", "did"], c: 0},
+                    {q: "He acted as though he ______ the boss.", o: ["was", "were", "is"], c: 1},
+                    {q: "I ______ have gone to the party, but I was too tired.", o: ["might", "could", "must"], c: 1},
+                    {q: "Not only ______ she sing, but she also plays the piano.", o: ["does", "can", "is"], c: 0},
+                    {q: "The book is ______ reading.", o: ["worth", "worthy", "worthwhile"], c: 0},
+                    {q: "He is ______ to win the race.", o: ["likely", "probably", "possibly"], c: 0}
+                ],
+                C2: [
+                    {q: "Under no circumstances ______ you leave the room.", o: ["should", "must", "shall"], c: 1},
+                    {q: "Try ______ he might, he couldn't open the door.", o: ["as", "though", "however"], c: 0},
+                    {q: "The plan was ______ with difficulties from the start.", o: ["fraught", "filled", "laden"], c: 0},
+                    {q: "Had I ______ known, I would have acted differently.", o: ["but", "only", "just"], c: 1},
+                    {q: "He is the ______ person I expected to see.", o: ["last", "least", "final"], c: 0},
+                    {q: "The results were ______ with our expectations.", o: ["consistent", "constant", "congruent"], c: 0},
+                    {q: "To all ______ and purposes, the job is finished.", o: ["intents", "intentions", "aims"], c: 0},
+                    {q: "He was ______ for his crimes.", o: ["indicted", "accused", "charged"], c: 0},
+                    {q: "I ______ that he be present at the meeting.", o: ["suggest", "insist", "demand"], c: 1},
+                    {q: "The project is ______ on the brink of collapse.", o: ["teetering", "hanging", "standing"], c: 0}
+                ]
+            },
+            cn: {
+                A1: [
+                    {q: "你好！(Nǐ hǎo!) — Что это значит?", o: ["Спасибо", "Привет", "Извини"], c: 1},
+                    {q: "我 ____ 俄罗斯人。(Wǒ ____ Éluósī rén.)", o: ["是 (shì)", "有 (yǒu)", "在 (zài)"], c: 0},
+                    {q: "他 ____ 三个姐姐。(Tā ____ sān gè jiějie.)", o: ["是 (shì)", "有 (yǒu)", "叫 (jiào)"], c: 1},
+                    {q: "你 ____ 吗？(Nǐ ____ ma?) — Ты хочешь пить воду?", o: ["喝水 (hē shuǐ)", "吃饭 (chī fàn)", "睡觉 (shuì jiào)"], c: 0},
+                    {q: "今天 ____ 号？(Jīntiān ____ hào?)", o: ["几 (jǐ)", "什么 (shénme)", "多少 (duōshǎo)"], c: 0},
+                    {q: "我不 ____ 汉语。(Wǒ bù ____ Hànyǔ.)", o: ["说 (shuō)", "看 (kàn)", "听 (tīng)"], c: 0},
+                    {q: "这是 ____ 的书。(Zhè shì ____ de shū.)", o: ["我 (wǒ)", "你 (nǐ)", "他 (tā)"], c: 0},
+                    {q: "苹果 ____ 钱一斤？(Píngguǒ ____ qián yì jīn?)", o: ["几 (jǐ)", "多少 (duōshǎo)", "什么 (shénme)"], c: 1},
+                    {q: "她在学校 ____ 汉语。(Tā zài xuéxiào ____ Hànyǔ.)", o: ["学习 (xuéxí)", "工作 (gōngzuò)", "买 (mǎi)"], c: 0},
+                    {q: "现在 ____ 点？(Xiànzài ____ diǎn?)", o: ["几 (jǐ)", "二 (èr)", "什么 (shénme)"], c: 0}
+                ],
+                A2: [
+                    {q: "我 ____ 跑步。(Wǒ ____ pǎobù.) — Я люблю бегать.", o: ["觉得", "喜欢", "准备"], c: 1},
+                    {q: "从我家 ____ 学校很远。", o: ["到", "离", "往"], c: 1},
+                    {q: "天黑了，该 ____ 了。", o: ["睡觉", "出去", "游泳"], c: 0},
+                    {q: "外边 ____ 下雪。", o: ["在", "是", "有"], c: 0},
+                    {q: "你 ____ 吗？(Ты понял?)", o: ["懂", "讲", "读"], c: 0},
+                    {q: "我 ____ 北京旅游过。", o: ["去", "在", "来"], c: 0},
+                    {q: "这个西瓜比那个 ____。", o: ["大", "很阔", "最好"], c: 0},
+                    {q: "你怎么才 ____？(Почему ты только сейчас пришел?)", o: ["到", "来", "走"], c: 1},
+                    {q: "请 ____。(Пожалуйста, входите.)", o: ["进", "出", "回"], c: 0},
+                    {q: "我 ____ 他认识两年了。", o: ["给", "和", "对"], c: 1}
+                ]
+            }
+        };
+
+        const libraryBank = {
+            en: [
+                {title: "Sentence Builder", q: "Составьте предложение: (yesterday / I / went / gym)", a: "I went gym yesterday", xp: 50},
+                {title: "Vocabulary Check", q: "Write the synonym of 'Quick':", a: "fast", xp: 30}
+            ],
+            cn: [
+                {title: "Word Order", q: "Составьте фразу: (去 / 没 / 昨天 / 我 / 商店)", a: "昨天我没去商店", xp: 60},
+                {title: "Characters", q: "Как иероглифами пишется 'Кошка' (māo)?", a: "猫", xp: 40}
+            ]
+        };
+
+        /* --- APP STATE --- */
+        let state = {
+            xp: 0,
+            correct: 0,
+            total: 0,
+            testsPassed: 0,
+            currentQuestions: [],
+            currentIdx: 0,
+            mistakes: []
+        };
+
+        /* --- NAVIGATION --- */
+        function navTo(id, el) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            el.classList.add('active');
+            if(id === 'library') renderLibrary();
+        }
+
+        /* --- TEST ENGINE --- */
+        function startTest() {
+            const lang = document.getElementById('test-lang').value;
+            const level = document.getElementById('test-level').value;
+            
+            if(!testBank[lang][level]) {
+                alert("Вопросы для этого уровня скоро появятся!");
+                return;
+            }
+
+            state.currentQuestions = [...testBank[lang][level]].sort(() => 0.5 - Math.random()).slice(0, 10);
+            state.currentIdx = 0;
+            state.mistakes = [];
+            state.tempCorrect = 0;
+
+            document.getElementById('test-setup').style.display = 'none';
+            document.getElementById('test-engine').style.display = 'block';
+            renderQuestion();
+        }
+
+        function renderQuestion() {
+            const q = state.currentQuestions[state.currentIdx];
+            document.getElementById('test-progress').innerText = `Question ${state.currentIdx + 1}/10`;
+            document.getElementById('test-question').innerText = q.q;
+            
+            const optionsHtml = q.o.map((opt, i) => `
+                <div class="opt-card" onclick="checkAnswer(${i})">${opt}</div>
+            `).join('');
+            document.getElementById('test-options').innerHTML = optionsHtml;
+        }
+
+        function checkAnswer(idx) {
+            const q = state.currentQuestions[state.currentIdx];
+            const cards = document.querySelectorAll('.opt-card');
+            
+            state.total++;
+            if(idx === q.c) {
+                cards[idx].classList.add('correct');
+                state.tempCorrect++;
+                state.correct++;
+                state.xp += 25;
+            } else {
+                cards[idx].classList.add('wrong');
+                cards[q.c].classList.add('correct');
+                state.mistakes.push({q: q.q, correct: q.o[q.c], yours: q.o[idx]});
+            }
+
+            setTimeout(() => {
+                state.currentIdx++;
+                if(state.currentIdx < 10) renderQuestion();
+                else showResults();
+                updateUI();
+            }, 1000);
+        }
+
+        function showResults() {
+            document.getElementById('test-engine').style.display = 'none';
+            const resDiv = document.getElementById('test-results');
+            resDiv.style.display = 'block';
+            state.testsPassed++;
+
+            let mistakesHtml = state.mistakes.map(m => `
+                <div style="margin-top:10px; padding:10px; background:rgba(239,68,68,0.1); border-radius:8px; border-left:4px solid var(--danger);">
+                    <p><b>Q:</b> ${m.q}</p>
+                    <p style="color:var(--success)">✓ Correct: ${m.correct}</p>
+                </div>
+            `).join('');
+
+            resDiv.innerHTML = `
+                <div class="card" style="text-align:center;">
+                    <h1>Result: ${state.tempCorrect * 10}%</h1>
+                    <p>You answered ${state.tempCorrect} out of 10 correctly.</p>
+                    <div style="text-align:left; margin-top:20px;">
+                        ${mistakesHtml || '<p style="color:var(--success)">Perfect score! No mistakes.</p>'}
+                    </div>
+                    <button class="btn" style="margin-top:20px;" onclick="resetTest()">Try Another Level</button>
+                </div>
+            `;
+        }
+
+        function resetTest() {
+            document.getElementById('test-results').style.display = 'none';
+            document.getElementById('test-setup').style.display = 'block';
+        }
+
+        /* --- LIBRARY & TASKS --- */
+        function renderLibrary() {
+            const lang = document.getElementById('lib-lang').value;
+            const grid = document.getElementById('library-grid');
+            const tasks = libraryBank[lang] || [];
+
+            grid.innerHTML = tasks.map((t, i) => `
+                <div class="card">
+                    <span class="level-badge">${t.title}</span>
+                    <p style="margin:10px 0;">${t.q}</p>
+                    <input type="text" id="lib-input-${i}" class="input-field" placeholder="Type answer here...">
+                    <div id="feedback-${i}" style="margin-top:10px; font-size:14px;"></div>
+                    <button class="btn btn-outline" style="width:100%; margin-top:10px;" onclick="checkLibTask(${i}, '${t.a}', ${t.xp})">Check Answer</button>
+                </div>
+            `).join('');
+        }
+
+        function checkLibTask(idx, correct, xp) {
+            const input = document.getElementById(`lib-input-${idx}`);
+            const feedback = document.getElementById(`feedback-${idx}`);
+            
+            if(input.value.trim().toLowerCase() === correct.toLowerCase()) {
+                feedback.innerHTML = `<span style="color:var(--success)">Excellent! +${xp} XP</span>`;
+                state.xp += xp;
+                state.correct++;
+                state.total++;
+                updateUI();
+            } else {
+                feedback.innerHTML = `<span style="color:var(--danger)">Wrong. Correct: <b>${correct}</b></span>`;
+                state.mistakes.push({q: "Task", correct: correct});
+                updateUI();
+            }
+        }
+
+        /* --- UI UPDATES --- */
+        function updateUI() {
+            document.getElementById('xp-display').innerText = state.xp;
+            document.getElementById('tests-display').innerText = state.testsPassed;
+            
+            const acc = state.total === 0 ? 0 : Math.round((state.correct / state.total) * 100);
+            document.getElementById('accuracy-display').innerText = acc + "%";
+
+            // Update error log on dashboard [cite: 341]
+            if(state.mistakes.length > 0) {
+                const log = document.getElementById('error-log');
+                log.innerHTML = state.mistakes.slice(-3).reverse().map(m => `
+                    <div style="padding:10px; background:rgba(255,255,255,0.05); border-radius:8px; margin-bottom:10px;">
+                        <p style="font-size:14px;">${m.q}</p>
+                        <p style="color:var(--success); font-size:12px;">Correct: ${m.correct}</p>
+                    </div>
+                `).join('');
+            }
+            
+            showToast("Progress Saved!");
+        }
+
+        function showToast(text) {
+            const t = document.getElementById('toast');
+            t.innerText = text;
+            t.style.transform = "translateX(0)";
+            setTimeout(() => t.style.transform = "translateX(250%)", 3000);
+        }
+
+        window.onload = updateUI;
+    </script>
+</body>
+</html>
