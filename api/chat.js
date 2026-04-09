@@ -37,13 +37,15 @@ module.exports = async function handler(req, res) {
             {
               parts: [
                 {
-                  text: `You are a helpful language learning tutor. Help users improve their English and Chinese skills. Be encouraging and provide clear explanations.\n\nUser: ${message}`
+                  text: `You are a concise language learning tutor. Help users improve English and Chinese skills with SHORT, direct answers (2-3 sentences max). Be encouraging but brief. Avoid explanations and just give the answer.
+
+User: ${message}`
                 }
               ]
             }
           ],
           generationConfig: {
-            maxOutputTokens: 500,
+            maxOutputTokens: 150,
             temperature: 0.7
           }
         })
