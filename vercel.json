@@ -1,5 +1,7 @@
 {
   "buildCommand": "echo 'Static site with serverless functions'",
   "outputDirectory": ".",
-  "public": true
+  "public": true,
+  "cleanUrls": false,
+  "trailingSlash": false
 }
