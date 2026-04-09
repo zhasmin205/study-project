@@ -1,8 +1,5 @@
 {
   "buildCommand": "echo 'Static site with serverless functions'",
   "outputDirectory": ".",
-  "public": true,
-  "env": {
-    "GEMINI_API_KEY": "@gemini-api-key"
-  }
+  "public": true
 }
