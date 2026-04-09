@@ -26,7 +26,7 @@ module.exports = async function handler(req, res) {
 
   try {
     const response = await fetch(
-      'https://api-inference.huggingface.co/models/meta-llama/Llama-2-7b-chat-hf',
+      'https://router.huggingface.co/models/google/flan-t5-base',
       {
         method: 'POST',
         headers: {
@@ -34,14 +34,10 @@ module.exports = async function handler(req, res) {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          inputs: `You are a helpful language learning tutor. Help users improve their English and Chinese skills. Be encouraging and provide clear explanations.
-
-User: ${message}
-Assistant:`,
-          parameters: {
-            max_new_tokens: 500,
-            temperature: 0.7
-          }
+          inputs: `You are a language learning tutor. Help improve English and Chinese skills. Be encouraging.
+          
+User question: ${message}
+Answer:`
         })
       }
     );
@@ -49,39 +45,42 @@ Assistant:`,
     let data;
     const contentType = response.headers.get('content-type');
     
-    // Handle both JSON and text responses
     if (contentType && contentType.includes('application/json')) {
       data = await response.json();
     } else {
       const text = await response.text();
       return res.status(response.status).json({
-        error: text || 'API returned invalid response'
+        error: `API error: ${text || 'Unknown error'}`
       });
     }
 
     if (!response.ok) {
       return res.status(response.status).json({
-        error: data.error || 'Hugging Face API error'
+        error: data.error || data[0]?.error || 'Hugging Face API error'
       });
     }
 
-    // Handle Hugging Face response format
+    // Extract text from response
     let reply = '';
     
-    if (Array.isArray(data)) {
-      reply = data[0]?.generated_text || 'No response generated';
-      // Remove the prompt from the response
-      if (reply.includes('Assistant:')) {
-        reply = reply.split('Assistant:')[1].trim();
+    if (Array.isArray(data) && data[0]) {
+      if (data[0].generated_text) {
+        reply = data[0].generated_text;
+      } else if (typeof data[0] === 'string') {
+        reply = data[0];
       }
     } else if (data.generated_text) {
       reply = data.generated_text;
-      if (reply.includes('Assistant:')) {
-        reply = reply.split('Assistant:')[1].trim();
-      }
-    } else {
-      reply = 'No response generated';
+    } else if (typeof data === 'string') {
+      reply = data;
     }
+    
+    // Clean up the response - remove the prompt
+    if (reply.includes('Answer:')) {
+      reply = reply.split('Answer:')[1].trim();
+    }
+    
+    reply = reply || 'No response generated';
 
     return res.status(200).json({ reply });
   } catch (error) {
